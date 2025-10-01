@@ -28,8 +28,6 @@ $(OBJDIR)/%.o: %.c | $(OBJDIR)
 $(TARGET): $(OBJDIR)/boot.o $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
-iso: $(ISO)
-
 $(ISO): $(TARGET)
 	mkdir -p iso/boot/grub
 	cp $(TARGET) iso/boot/
@@ -43,6 +41,6 @@ run-elf: $(TARGET)
 	qemu-system-i386 -kernel $(TARGET)
 
 clean:
-	rm -rf $(OBJDIR) *.elf iso $(ISO)
+	rm -rf $(OBJDIR) iso $(ISO)
 
 re: clean all
