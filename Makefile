@@ -13,18 +13,40 @@ OBJDIR = build
 SRCS = kernel.c $(wildcard src/*.c)
 OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(SRCS))
 
-all: $(ISO)
+# --------------------------------------------------------------------
+# Règles spéciales
+# --------------------------------------------------------------------
+.PHONY: all build run run-elf clean_obj clean_iso clean_elf fclean re
+.PRECIOUS: $(OBJDIR) $(OBJDIR)/
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
+# --------------------------------------------------------------------
+# Règle par défaut : affiche l'aide
+# --------------------------------------------------------------------
+all:
+	@echo "Available make targets:"
+	@echo "  build       -> compile et génère $(TARGET) et $(ISO)"
+	@echo "  run         -> exécute $(ISO) avec QEMU"
+	@echo "  run-elf     -> exécute $(TARGET) directement avec QEMU"
+	@echo "  clean_obj   -> supprime les objets compilés ($(OBJDIR))"
+	@echo "  clean_iso   -> supprime l'iso et le dossier iso/"
+	@echo "  clean_elf   -> supprime le kernel.elf"
+	@echo "  fclean      -> clean_obj + clean_iso + clean_elf"
+	@echo "  re          -> fclean puis build"
 
-$(OBJDIR)/boot.o: boot.s | $(OBJDIR)
+# --------------------------------------------------------------------
+# Compilation des objets
+# --------------------------------------------------------------------
+$(OBJDIR)/boot.o: boot.s
+	mkdir -p $(dir $@)
 	$(ASM) $(ASMFLAGS) $< -o $@
 
-$(OBJDIR)/%.o: %.c | $(OBJDIR)
+$(OBJDIR)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# --------------------------------------------------------------------
+# Kernel + ISO
+# --------------------------------------------------------------------
 $(TARGET): $(OBJDIR)/boot.o $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
@@ -34,13 +56,29 @@ $(ISO): $(TARGET)
 	cp grub/grub.cfg iso/boot/grub/
 	grub-mkrescue -o $(ISO) iso
 
+# --------------------------------------------------------------------
+# Helpers
+# --------------------------------------------------------------------
+build: $(ISO)
+
 run: $(ISO)
 	qemu-system-i386 -cdrom $(ISO)
 
 run-elf: $(TARGET)
 	qemu-system-i386 -kernel $(TARGET)
 
-clean:
-	rm -rf $(OBJDIR) iso $(ISO)
+# --------------------------------------------------------------------
+# Clean rules
+# --------------------------------------------------------------------
+clean_obj:
+	rm -rf $(OBJDIR)
 
-re: clean all
+clean_iso:
+	rm -rf iso $(ISO)
+
+clean_elf:
+	rm -f $(TARGET)
+
+fclean: clean_obj clean_iso clean_elf
+
+re: fclean build
