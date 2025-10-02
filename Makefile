@@ -17,7 +17,6 @@ OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(SRCS))
 # Règles spéciales
 # --------------------------------------------------------------------
 .PHONY: all build run run-elf clean_obj clean_iso clean_elf clean_obj_iso fclean re
-.PRECIOUS: $(OBJDIR) $(OBJDIR)/
 
 # --------------------------------------------------------------------
 # Règle par défaut : affiche l'aide
